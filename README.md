@@ -1,30 +1,36 @@
-# Painel de Vagas e Candidaturas (Flask + SQLite)
+# Technical Application & Internship Pipeline Dashboard (Flask + SQLite)
 
-Aplicação web e utilitário de terminal (CLI) para organizar processos seletivos, contatos de networking, anotações de entrevistas e sincronização automática de prazos com calendários (**Google Calendar** e padrão universal **iCalendar / .ics**).
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
+[![Framework](https://img.shields.io/badge/Framework-Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
+[![Database](https://img.shields.io/badge/Database-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org/)
+[![Calendar](https://img.shields.io/badge/Calendar-iCal%20%7C%20Google%20API-4285F4?style=flat-square&logo=googlecalendar&logoColor=white)](https://developers.google.com/calendar)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg?style=flat-square)](LICENSE)
+
+Full-stack web application and CLI terminal utility to track recruitment pipelines, technical interviews, recruiter networking notes, and two-way deadline synchronization with **Google Calendar** and standard **iCalendar (.ics)** feeds.
 
 ---
 
-## Arquitetura da Aplicação
+## 🏗️ Application Architecture
 
 ```mermaid
 flowchart TD
-    subgraph INTERFACE["Interface com o Usuário"]
-        HTML["Templates HTML Jinja2<br/>(index.html / login.html)"]
-        CSS["Estilo Visual Escuro<br/>(static/css/style.css)"]
-        JS["Controle Dinâmico Vanilla JS<br/>(static/js/app.js)"]
-        CLI["Comandos no Terminal<br/>(app/gerenciar.py)"]
+    subgraph UI["User Interface"]
+        HTML["Jinja2 HTML Templates<br/>(index.html / login.html)"]
+        CSS["Tokyo Night Dark Theme<br/>(static/css/style.css)"]
+        JS["Dynamic Vanilla JS Client<br/>(static/js/app.js)"]
+        CLI["Terminal CLI Utility<br/>(app/gerenciar.py)"]
     end
 
-    subgraph SERVIDOR["Servidor Web (Python / Flask)"]
-        APP["Rotas REST e Autenticação<br/>(app/app.py)"]
-        CAL["Gerador de Calendário .ics<br/>(app/calendario.py)"]
-        SYNC["Sincronizador Google Calendar<br/>(app/google_sync.py)"]
+    subgraph BACKEND["Web Application Server (Python / Flask)"]
+        APP["RESTful Routes & PBKDF2 Auth<br/>(app/app.py)"]
+        CAL["iCalendar .ics Feed Generator<br/>(app/calendario.py)"]
+        SYNC["Google Calendar Sync (OAuth 2.0)<br/>(app/google_sync.py)"]
     end
 
-    subgraph DADOS["Banco de Dados & Calendários"]
-        DB[("Banco SQLite Local<br/>(data/painel_vagas.db)")]
-        ICS["Arquivo de Calendário (.ics)"]
-        GAPI["Google Calendar API (OAuth 2.0)"]
+    subgraph PERSISTENCE["Storage & External Calendars"]
+        DB[("Embedded SQLite DB<br/>(data/painel_vagas.db)")]
+        ICS["Dynamic .ics Subscription"]
+        GAPI["Google Calendar API"]
     end
 
     HTML & CSS & JS --> APP
@@ -36,83 +42,82 @@ flowchart TD
 
 ---
 
-## O que a Aplicação Faz
+## ⚡ Key Features
 
-- **Acompanhamento de Vagas:** Cadastro de empresas, cargos, modalidade (remoto, híbrido ou presencial), tecnologias exigidas, faixas de bolsa/remuneração e status da etapa atual (inscrito, entrevista, case, proposta).
-- **Rede de Contatos (Networking):** Registro de recrutadores e engenheiros, histórico de mensagens enviadas no LinkedIn e tarefas de follow-up.
-- **Base de Conhecimento:** Fichas rápidas com o perfil técnico de cada empresa para você revisar antes de uma entrevista técnica.
-- **Sincronização com Calendário:**
-  - Gera um link de assinatura `.ics` que atualiza seus prazos direto no celular (compatível com Google Agenda, Apple Calendar e Outlook).
-  - Permite conectar sua conta do Google via OAuth 2.0 para criar eventos com alarmes automaticamente na sua agenda.
-- **Acesso pelo Terminal:** Script `gerenciar.py` para consultar rapidamente suas vagas e tarefas pendentes sem precisar abrir o navegador.
-- **Segurança:** Acesso protegido por PIN com hash seguro (PBKDF2-SHA256) e bloqueio temporário contra tentativas repetidas.
-- **Dados Iniciais de Demonstração (Mock Data 100% Fictício):** Na primeira inicialização, o banco cria registros com o prefixo explícito `[EXEMPLO] (Fictício)` e valores zerados (`R$ 0.000`), servindo unicamente para testar a renderização dos componentes visuais sem conter nenhuma informação real.
+- **Recruitment Pipeline Tracking:** Manage engineering roles, company dossiers, work modes (remote/hybrid/onsite), salary benchmarks, and stage transitions (Applied, Interview, Technical Assessment, Offer).
+- **Recruiter & Engineer CRM:** Track contacts, historical interactions, follow-up cadence, and referral connections.
+- **Two-Way Calendar Synchronization:**
+  - Dynamic `.ics` subscription URL compatible with Apple Calendar, Google Calendar, and Microsoft Outlook.
+  - Native Google Calendar OAuth 2.0 integration with automatic event alarms.
+- **Terminal CLI (`gerenciar.py`):** Query upcoming interview dates, task deadlines, and recruiter lists directly from the terminal.
+- **Security:** Protected by salted PBKDF2-SHA256 hashed PIN authentication and temporary rate-limiting against brute-force attempts.
+- **Mock Demonstration Fixtures:** Initial boot automatically populates explicit `[EXAMPLE] (Fictitious)` mock records with zeroed compensation values (`$ 0.00`) for instant component inspection without exposing sensitive real-world records.
 
 ---
 
-## Estrutura de Pastas
+## 📂 Repository Structure
 
 ```
 painel-vagas-flask/
 ├── app/
-│   ├── app.py                  # Servidor Flask, rotas da API e criação automática do banco
-│   ├── calendario.py           # Geração do feed de calendário (.ics / RFC 5545)
-│   ├── google_sync.py          # Conexão com a API do Google Calendar (OAuth 2.0)
-│   ├── gerenciar.py            # Ferramenta para consultar dados direto no terminal
+│   ├── app.py                  # Flask server, REST endpoints & automatic schema migration
+│   ├── calendario.py           # RFC 5545 iCalendar (.ics) feed generator
+│   ├── google_sync.py          # Google Calendar API integration (OAuth 2.0)
+│   ├── gerenciar.py            # Headless terminal CLI utility
 │   ├── static/
-│   │   ├── css/style.css       # Estilização visual da tela
-│   │   └── js/app.js           # Funções e chamadas da interface web
+│   │   ├── css/style.css       # Clean responsive dark stylesheet
+│   │   └── js/app.js           # Client-side DOM interactions and AJAX calls
 │   └── templates/
-│       ├── index.html          # Tela principal do painel
-│       └── login.html          # Tela de login com PIN
-├── data/                       # Onde o banco SQLite fica salvo (ignorado no git)
-├── requirements.txt            # Pacotes necessários (Flask, requests, etc.)
-├── .gitignore                  # Impede que seu banco de dados e tokens locais subam pro GitHub
+│       ├── index.html          # Main pipeline dashboard
+│       └── login.html          # Hashed PIN gatekeeper view
+├── data/                       # Local SQLite database (gitignored)
+├── requirements.txt            # Python dependencies (Flask, requests, etc.)
+├── .gitignore                  # Prevents local credentials and DB artifacts from committing
 └── README.md
 ```
 
 ---
 
-## Como Rodar no Computador
+## 🚀 Setup & Execution
 
-### 1. Instalar as dependências
+### 1. Installation
 
 ```bash
 git clone https://github.com/VPariz/painel-vagas-flask.git
 cd painel-vagas-flask
 python -m venv venv
 
-# Ative o ambiente virtual:
-# No Windows:
+# Activate virtual environment:
+# On Windows:
 .\venv\Scripts\activate
-# No Linux/Mac:
+# On Linux/macOS:
 source venv/bin/activate
 
 pip install -r requirements.txt
 ```
 
-### 2. Iniciar a aplicação web
+### 2. Launch Web Application
 
 ```bash
 python app/app.py
 ```
-Abra o navegador e acesse: `http://127.0.0.1:5000`  
-*PIN padrão de acesso:* `1234` (você pode alterar direto pela tela de login ou definindo a variável de ambiente `APP_PIN`).
+Open your browser at `http://127.0.0.1:5000`  
+*Default PIN:* `1234` (configurable via login screen or `APP_PIN` environment variable).
 
-### 3. Usar pelo terminal (sem abrir o navegador)
+### 3. Headless Terminal CLI
 
 ```bash
-# Ver suas tarefas pendentes e prazos
+# View pending tasks and approaching deadlines
 python app/gerenciar.py tarefas
 
-# Ver contatos e status de mensagens
+# View recruiter contacts and message statuses
 python app/gerenciar.py contatos
 
-# Listar todas as vagas cadastradas
+# List all tracked job applications
 python app/gerenciar.py vagas
 ```
 
 ---
 
-## Licença
-Distribuído sob licença MIT. Consulte o arquivo `LICENSE` para mais detalhes.
+## 📜 License
+This project is licensed under the **MIT License** — see the `LICENSE` file for details.
