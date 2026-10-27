@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel de Vagas & Processos Seletivos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div>
+                <div class="brand-title">💼 Painel de Vagas & Processos Seletivos</div>
+                <div class="brand-subtitle">Pipeline de Candidaturas, Networking Técnico & Sincronização RFC 5545 iCalendar</div>
+            </div>
+            <div style="display:flex;gap:0.6rem;flex-wrap:wrap;">
+                <button class="btn-outline" onclick="openSyncModal()">📅 Sincronizar Agenda (.ICS / Google)</button>
+                <a href="/api/calendario.ics" class="btn-action">📥 Exportar .ICS</a>
+            </div>
+        </header>
+
+        <!-- KPIs -->
+        <section class="kpi-grid">
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-vagas">0</div>
+                <div class="kpi-label">Oportunidades Ativas</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-contatos">0</div>
+                <div class="kpi-label">Contatos no CRM</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-taxa">0%</div>
+                <div class="kpi-label">Taxa de Conexão</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-value" id="kpi-tarefas">0</div>
+                <div class="kpi-label">Prazos Pendentes</div>
+            </div>
+        </section>
+
+        <!-- Navegação Modular -->
+        <nav class="tabs">
+            <button class="tab-btn active" onclick="switchTab('tab-tarefas', this)">📋 Tarefas & Prazos</button>
+            <button class="tab-btn" onclick="switchTab('tab-vagas', this)">🚀 Pipeline de Vagas</button>
+            <button class="tab-btn" onclick="switchTab('tab-pessoas', this)">🤝 Networking CRM</button>
+            <button class="tab-btn" onclick="switchTab('tab-fichas', this)">🧠 Base de Empresas</button>
+        </nav>
+
+        <!-- ABA 1: TAREFAS & PRAZOS -->
+        <section id="tab-tarefas" class="tab-content active">
+            <div class="section-header">
+                <h2>Kanban de Tarefas & Entregas Sincronizáveis</h2>
+                <button class="btn-action" onclick="openModal('modal-tarefa')">+ Nova Tarefa</button>
+            </div>
+            <div id="tarefas-list" class="cards-grid"></div>
+        </section>
+
+        <!-- ABA 2: PIPELINE DE VAGAS -->
+        <section id="tab-vagas" class="tab-content">
+            <div class="section-header">
+                <h2>Pipeline de Oportunidades & Processos Seletivos</h2>
+                <button class="btn-action" onclick="openModal('modal-vaga')">+ Nova Oportunidade</button>
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Empresa</th>
+                            <th>Cargo / Programa</th>
+                            <th>Modalidade</th>
+                            <th>Stack Requerida</th>
+                            <th>Bolsa / Remuneração</th>
+                            <th>Deadline</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="vagas-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ABA 3: NETWORKING CRM -->
+        <section id="tab-pessoas" class="tab-content">
+            <div class="section-header">
+                <h2>Gestão de Contatos & Abordagem Técnica</h2>
+                <div style="display:flex;gap:0.6rem;">
+                    <input type="text" id="search-pessoas" placeholder="🔍 Filtrar por nome, empresa ou cargo..." oninput="renderPessoas()" style="width:260px;">
+                    <button class="btn-action" onclick="openModal('modal-pessoa')">+ Novo Contato</button>
+                </div>
+            </div>
+
+            <div id="ai-output-box" style="display:none;margin-bottom:1.2rem;background:var(--surface);border:1px solid var(--primary);border-radius:12px;padding:1rem;">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem;">
+                    <strong style="color:var(--primary);">✨ Sugestão / Prompt de Abordagem Técnica</strong>
+                    <button class="btn-outline" onclick="document.getElementById('ai-output-box').style.display='none'">Fechar</button>
+                </div>
+                <textarea id="ai-output-text" rows="5"></textarea>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Empresa</th>
+                            <th>Cargo</th>
+                            <th>Status</th>
+                            <th>Prioridade</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pessoas-tbody"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- ABA 4: FICHAS DE EMPRESAS -->
+        <section id="tab-fichas" class="tab-content">
+            <div class="section-header">
+                <h2>Fichas de Contexto Técnico por Empresa</h2>
+                <button class="btn-action" onclick="openModal('modal-ficha')">+ Nova Ficha</button>
+            </div>
+            <div id="fichas-grid" class="cards-grid"></div>
+        </section>
+    </div>
+
+    <!-- MODAL: NOVA TAREFA -->
+    <div class="modal-overlay" id="modal-tarefa">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Tarefa / Prazo</h3>
+                <button class="btn-outline" onclick="closeModal('modal-tarefa')">✕</button>
+            </div>
+            <form onsubmit="saveTarefa(event)">
+                <div class="form-group">
+                    <label>Categoria</label>
+                    <select id="t-categoria">
+                        <option value="Candidaturas">💼 Candidaturas</option>
+                        <option value="Carreira & CV">📄 Carreira & Portfólio</option>
+                        <option value="Estudos Técnicos">📚 Estudos Técnicos</option>
+                        <option value="Projetos">🛠️ Projetos Práticos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Título</label>
+                    <input type="text" id="t-titulo" required placeholder="Ex: Enviar aplicação de estágio">
+                </div>
+                <div class="form-group">
+                    <label>Subtítulo / Referência</label>
+                    <input type="text" id="t-subtitulo" placeholder="Ex: Etapa técnica">
+                </div>
+                <div class="form-group">
+                    <label>Data Limite (Sincronizável via .ICS / Google Calendar)</label>
+                    <input type="date" id="t-data-prazo">
+                </div>
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="t-prioridade">
+                        <option value="Alta">Alta</option>
+                        <option value="Média" selected>Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Descrição</label>
+                    <textarea id="t-descricao" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%;justify-content:center;">Salvar Tarefa</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA VAGA -->
+    <div class="modal-overlay" id="modal-vaga">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Cadastrar Oportunidade</h3>
+                <button class="btn-outline" onclick="closeModal('modal-vaga')">✕</button>
+            </div>
+            <form onsubmit="saveVaga(event)">
+                <div class="form-group">
+                    <label>Empresa / Instituição</label>
+                    <input type="text" id="v-empresa" required placeholder="Ex: Nome da Empresa (Fictício)">
+                </div>
+                <div class="form-group">
+                    <label>Cargo / Programa</label>
+                    <input type="text" id="v-cargo" required placeholder="Ex: Cargo ou Vaga (Exemplo)">
+                </div>
+                <div class="form-group">
+                    <label>Modalidade</label>
+                    <select id="v-modalidade">
+                        <option value="Remoto">Remoto</option>
+                        <option value="Híbrido">Híbrido</option>
+                        <option value="Presencial">Presencial</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Stack Técnica</label>
+                    <input type="text" id="v-stack" placeholder="Ex: C/C++, STM32, FreeRTOS, Python">
+                </div>
+                <div class="form-group">
+                    <label>Remuneração / Bolsa</label>
+                    <input type="text" id="v-remuneracao" placeholder="Ex: Valor da Bolsa (Ilustrativo)">
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="date" id="v-deadline">
+                </div>
+                <div class="form-group">
+                    <label>Status no Funil</label>
+                    <select id="v-status">
+                        <option value="Mapeada">Mapeada</option>
+                        <option value="Inscrito">Inscrito</option>
+                        <option value="Entrevista Técnica">Entrevista Técnica</option>
+                        <option value="Proposta">Proposta</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notas</label>
+                    <textarea id="v-notas" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%;justify-content:center;">Salvar Oportunidade</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVO CONTATO -->
+    <div class="modal-overlay" id="modal-pessoa">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Novo Contato de Networking</h3>
+                <button class="btn-outline" onclick="closeModal('modal-pessoa')">✕</button>
+            </div>
+            <form onsubmit="savePessoa(event)">
+                <div class="form-group">
+                    <label>Nome</label>
+                    <input type="text" id="p-nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Empresa</label>
+                    <input type="text" id="p-empresa" required>
+                </div>
+                <div class="form-group">
+                    <label>Cargo</label>
+                    <input type="text" id="p-cargo" placeholder="Ex: Tech Lead / Recruiter">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="p-status">
+                        <option value="⏳ Pendente">⏳ Pendente</option>
+                        <option value="✅ Conectado">✅ Conectado</option>
+                        <option value="💬 Em Conversa">💬 Em Conversa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Prioridade</label>
+                    <select id="p-prioridade">
+                        <option value="Alta">Alta</option>
+                        <option value="Média" selected>Média</option>
+                        <option value="Baixa">Baixa</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Próximo Passo</label>
+                    <input type="text" id="p-passo" placeholder="Ex: Enviar link do portfólio">
+                </div>
+                <button type="submit" class="btn-action" style="width:100%;justify-content:center;">Salvar Contato</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: NOVA FICHA -->
+    <div class="modal-overlay" id="modal-ficha">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Nova Ficha de Contexto</h3>
+                <button class="btn-outline" onclick="closeModal('modal-ficha')">✕</button>
+            </div>
+            <form onsubmit="saveFicha(event)">
+                <div class="form-group">
+                    <label>Nome da Empresa</label>
+                    <input type="text" id="f-nome" required>
+                </div>
+                <div class="form-group">
+                    <label>Setor / Tipo</label>
+                    <input type="text" id="f-tipo" placeholder="Ex: Sistemas Embarcados & IoT">
+                </div>
+                <div class="form-group">
+                    <label>Produto / Core Business</label>
+                    <input type="text" id="f-produto" placeholder="Ex: Hardware de telemetria industrial">
+                </div>
+                <div class="form-group">
+                    <label>Stack Tecnológica</label>
+                    <input type="text" id="f-stack" placeholder="Ex: C++, Altium Designer, Linux, ROS 2">
+                </div>
+                <div class="form-group">
+                    <label>Pontos de Conexão com seu Portfólio</label>
+                    <textarea id="f-conexao" rows="3"></textarea>
+                </div>
+                <button type="submit" class="btn-action" style="width:100%;justify-content:center;">Salvar Ficha</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: SINCRONIZAÇÃO DE AGENDA -->
+    <div class="modal-overlay" id="modal-sync">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>📅 Sincronização de Calendário (RFC 5545 & Google API)</h3>
+                <button class="btn-outline" onclick="closeModal('modal-sync')">✕</button>
+            </div>
+            <p style="font-size:0.88rem;color:var(--text-muted);margin-bottom:1rem;">
+                Total de tarefas com prazo configuradas: <strong id="sync-total-eventos" style="color:var(--primary);">0</strong>
+            </p>
+            <div style="background:rgba(56,189,248,0.08);border:1px solid var(--border);border-radius:10px;padding:1rem;margin-bottom:1rem;">
+                <h4 style="margin-bottom:0.4rem;">Opção 1: Arquivo Universal iCalendar (.ICS)</h4>
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.8rem;">
+                    Compatível com Google Calendar, Apple Calendar (iOS/macOS) e Microsoft Outlook com alarmes <code>VALARM</code> integrados.
+                </p>
+                <a href="/api/calendario.ics" class="btn-action">📥 Baixar prazos_processos_seletivos.ics</a>
+            </div>
+            <div style="background:rgba(16,185,129,0.08);border:1px solid var(--border);border-radius:10px;padding:1rem;">
+                <h4 style="margin-bottom:0.4rem;">Opção 2: Integração OAuth 2.0 Google Calendar</h4>
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.6rem;">
+                    Status: <strong id="google-status-badge">Verificando...</strong>
+                </p>
+                <button id="btn-google-sync" class="btn-outline" onclick="syncGoogleNow()">🔄 Sincronizar via Google Calendar API</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

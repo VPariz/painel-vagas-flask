@@ -1,0 +1,5 @@
+flask>=2.3.0
+werkzeug>=2.3.0
+requests>=2.31.0
+google-auth>=2.22.0
+google-auth-oauthlib>=1.0.0

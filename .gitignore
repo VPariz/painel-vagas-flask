@@ -1,0 +1,32 @@
+# Segredos e Variáveis de Ambiente
+.env
+.env.*
+.flaskenv
+.secret_key
+
+# Dados locais e senhas
+*.db
+*.sqlite
+*.sqlite3
+instance/
+auth_config.json
+data/
+*.ics
+
+# Credenciais Google / OAuth
+*credentials*.json
+*token*.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.venv/
+env/
+
+# IDEs e Sistema
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
