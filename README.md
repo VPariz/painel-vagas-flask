@@ -1,5 +1,6 @@
 # Technical Application & Internship Pipeline Dashboard (Flask + SQLite)
 
+[![Flask CI](https://github.com/VPariz/painel-vagas-flask/actions/workflows/ci.yml/badge.svg)](https://github.com/VPariz/painel-vagas-flask/actions/workflows/ci.yml)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Framework](https://img.shields.io/badge/Framework-Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![Database](https://img.shields.io/badge/Database-SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://sqlite.org/)
